@@ -1,8 +1,15 @@
+
 const express = require("express");
 const router = express.Router();
 const Item = require('../models/users');
 const multer = require('multer');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const Customer = require('../models/customer'); // Ensure you're using the correct model
+
+
 
 // Multer configuration for image upload
 var storage = multer.diskStorage({
@@ -18,6 +25,95 @@ var upload = multer({ storage: storage });
 
 // WEB ROUTES
 
+// Render register page
+router.get('/register', (req, res) => {
+    res.render('layout/register');
+});
+
+// Handle user registration
+router.post('/register', async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        // Basic validation
+        if (!username || !email || !password) {
+            return res.status(400).send('All fields are required');
+        }
+
+        // Check if user already exists
+        const existingUser = await Customer.findOne({ email });
+        if (existingUser) {
+            return res.status(400).send('User already exists');
+        }
+
+        // Hash password before saving
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create new user
+        const user = new Customer({
+            username,
+            email,
+            password: hashedPassword,
+        });
+        
+        await user.save();
+        res.redirect('/login');
+    } catch (err) {
+        console.error(err);
+        res.status(400).send('Error registering user');
+    }
+});
+
+// Render login page
+router.get('/login', (req, res) => {
+    res.render('layout/login');
+});
+
+// Login Route
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Log the request body to check incoming data
+        console.log('Request Body:', req.body);
+
+        if (!email || !password) {
+            return res.status(400).send('Both email and password are required');
+        }
+
+        const user = await Customer.findOne({ email });
+        if (!user) {
+            return res.status(400).send('Invalid credentials');
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).send('Invalid credentials');
+        }
+
+        req.session.user = { id: user._id, username: user.username };
+        res.redirect('/');
+    } catch (err) {
+        console.error('Error logging in:', err);
+        res.status(500).send('Internal server error');
+    }
+});
+
+// Home Route (for logged-in users)
+router.get('/', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+
+    res.render('home', { user: req.session.user });  // Passing user info to the view
+});
+
+// Logout route
+router.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
+});
 
 // Insert a user into the database route
 router.post('/add', upload.single("image"), async (req, res) => {

@@ -1,16 +1,19 @@
-<%- include('layout/header')%>
+<%- include('layout/header') %>
 
     <div class="container">
         <div class="row my-4">
             <div class="col-lg-12">
-                <% if (message) { %>
+                <!-- Message Alert -->
+                <% if (typeof message !== 'undefined' && message) { %>
                     <div class="alert alert-dismissible fade show alert-<%= message.type %>" role="alert">
                         <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
                         <strong><%= message.message %></strong>
                     </div>
                     <% } %>
+
+                        <!-- Items Table -->
                         <div class="table-responsive">
-                            <% if(items != '') { %>
+                            <% if (items && items.length > 0) { %>
                                 <table class="table table-striped text-center my-3">
                                     <thead>
                                         <tr class="table-dark">
@@ -22,21 +25,23 @@
                                             <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
-
                                     <tbody>
                                         <% items.forEach((row, index) => { %>
                                             <tr class="align-middle text-center">
-                                                <td style="text-align: center;">
-                                                    <%= index %>
+                                                <td>
+                                                    <%= index + 1 %>
                                                 </td>
-                                                <td><img src="<%= row.image %>" width="100" class="img-thumbnail" /></td>
+                                                <td>
+                                                    <!-- Ensure the image path is correct -->
+                                                    <img src="<%= row.image ? '/uploads/' + row.image : '/images/default.jpg' %>" width="100" class="img-thumbnail" alt="Item Image" />
+                                                </td>
                                                 <td>
                                                     <%= row.name %>
                                                 </td>
                                                 <td>
                                                     <%= row.price %>
                                                 </td>
-                                                <td style="text-align: center;">
+                                                <td>
                                                     <%= row.quantity %>
                                                 </td>
                                                 <td>
@@ -48,6 +53,7 @@
                                     </tbody>
                                 </table>
                                 <% } else { %>
+                                    <!-- No Items Found -->
                                     <h1 class="text-center text-secondary mt-5">No items found in the database!</h1>
                                     <% } %>
                         </div>
@@ -55,4 +61,4 @@
         </div>
     </div>
 
-    <%- include('layout/footer')%>
+    <%- include('layout/footer') %>
